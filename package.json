@@ -1,0 +1,8 @@
+{
+  "name": "pca-compressor-web",
+  "version": "1.0.0",
+  "description": "PCA Compressor Web Application",
+  "scripts": {
+    "start": "python -m http.server 3000"
+  }
+}

@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PCA Compressor - Web Demo</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div id="app">
+        <!-- Header -->
+        <header>
+            <div class="logo">
+                <svg viewBox="0 0 200 60" class="logo-svg">
+                    <defs>
+                        <linearGradient id="logoGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" style="stop-color:#667eea"/>
+                            <stop offset="50%" style="stop-color:#764ba2"/>
+                            <stop offset="100%" style="stop-color:#f093fb"/>
+                        </linearGradient>
+                        <filter id="glow">
+                            <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
+                            <feMerge>
+                                <feMergeNode in="coloredBlur"/>
+                                <feMergeNode in="SourceGraphic"/>
+                            </feMerge>
+                        </filter>
+                    </defs>
+                    <text x="10" y="45" font-family="Arial, sans-serif" font-size="32" font-weight="bold" fill="url(#logoGradient)" filter="url(#glow)">PCA</text>
+                    <text x="80" y="45" font-family="Arial, sans-serif" font-size="24" fill="#333">Compressor</text>
+                </svg>
+            </div>
+            <nav class="nav-buttons">
+                <button id="homeBtn" class="active">Home</button>
+                <button id="workspaceBtn">Workspace</button>
+                <button id="aboutBtn">About</button>
+            </nav>
+        </header>
+
+        <!-- Main Content -->
+        <main>
+            <!-- Home Screen -->
+            <div id="homeScreen" class="screen active">
+                <div class="hero-section">
+                    <h1 class="hero-title">Image Compression with PCA</h1>
+                    <p class="hero-subtitle">Transform your images using Principal Component Analysis</p>
+                    <div class="features-grid">
+                        <div class="feature-card">
+                            <div class="feature-icon"></div>
+                            <h3>PCA Algorithm</h3>
+                            <p>Advanced dimensionality reduction for intelligent compression</p>
+                        </div>
+                        <div class="feature-card">
+                            <div class="feature-icon"></div>
+                            <h3>Quality Preserved</h3>
+                            <p>SSIM metrics ensure visual quality is maintained</p>
+                        </div>
+                        <div class="feature-card">
+                            <div class="feature-icon"></div>
+                            <h3>Smart Orientation</h3>
+                            <p>Automatic detection and correction of image rotation</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="upload-section">
+                    <div id="dropZone" class="drop-zone">
+                        <svg class="upload-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                            <polyline points="17 8 12 3 7 8"></polyline>
+                            <line x1="12" y1="3" x2="12" y2="15"></line>
+                        </svg>
+                        <h2>Drag & Drop Image Here</h2>
+                        <p>or</p>
+                        <button id="selectFileBtn" class="primary-btn">Select File</button>
+                        <p class="supported-formats">Supported formats: JPEG, PNG</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Workspace Screen -->
+            <div id="workspaceScreen" class="screen">
+                <div class="workspace-container">
+                    <div class="image-comparison">
+                        <div class="image-panel">
+                            <h3>Original</h3>
+                            <div id="originalPreview" class="image-preview">
+                                <div class="placeholder">No image selected</div>
+                                <canvas id="originalCanvas" class="preview-canvas"></canvas>
+                            </div>
+                            <div class="image-info" id="originalInfo"></div>
+                        </div>
+                        <div class="image-panel">
+                            <h3>Compressed</h3>
+                            <div id="compressedPreview" class="image-preview">
+                                <div class="placeholder">Compress image to see preview</div>
+                                <canvas id="compressedCanvas" class="preview-canvas"></canvas>
+                            </div>
+                            <div class="image-info" id="compressedInfo"></div>
+                        </div>
+                    </div>
+
+                    <aside class="controls-panel">
+                        <div class="control-group">
+                            <label for="quality">Quality</label>
+                            <div class="slider-container">
+                                <input type="range" id="quality" min="0.1" max="1.0" step="0.1" value="0.7">
+                                <span id="qualityValue">0.7</span>
+                            </div>
+                        </div>
+
+                        <div class="control-group">
+                            <label>PCA Mode</label>
+                            <div class="radio-group">
+                                <label><input type="radio" name="mode" value="per-channel" checked> Per-Channel</label>
+                                <label><input type="radio" name="mode" value="joint-channel"> Joint-Channel</label>
+                            </div>
+                        </div>
+
+                        <div class="control-group">
+                            <label for="retainComponents">Retain Components</label>
+                            <input type="number" id="retainComponents" min="1" max="3" value="1">
+                        </div>
+
+                        <div class="control-group">
+                            <label>Orientation</label>
+                            <div class="radio-group">
+                                <label><input type="radio" name="orientation" value="auto" checked> Auto</label>
+                                <label><input type="radio" name="orientation" value="disabled"> Disabled</label>
+                            </div>
+                        </div>
+
+                        <div class="metrics-panel">
+                            <h3>Compression Metrics</h3>
+                            <div id="metricsDisplay">
+                                <div class="metric">
+                                    <span class="label">Original Size:</span>
+                                    <span class="value" id="originalSize">-</span>
+                                </div>
+                                <div class="metric">
+                                    <span class="label">Compressed Size:</span>
+                                    <span class="value" id="compressedSize">-</span>
+                                </div>
+                                <div class="metric">
+                                    <span class="label">Compression Ratio:</span>
+                                    <span class="value" id="compressionRatio">-</span>
+                                </div>
+                                <div class="metric">
+                                    <span class="label">SSIM:</span>
+                                    <span class="value" id="ssim">-</span>
+                                </div>
+                                <div class="metric">
+                                    <span class="label">PSNR:</span>
+                                    <span class="value" id="psnr">-</span>
+                                </div>
+                                <div class="metric">
+                                    <span class="label">Time:</span>
+                                    <span class="value" id="processingTime">-</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="action-buttons">
+                            <button id="compressBtn" class="primary-btn" disabled>Compress</button>
+                            <button id="downloadBtn" class="secondary-btn" disabled>Download</button>
+                        </div>
+                    </aside>
+                </div>
+
+                <div class="status-bar">
+                    <span id="statusText">Ready</span>
+                </div>
+            </div>
+
+            <!-- About Screen -->
+            <div id="aboutScreen" class="screen">
+                <div class="about-container">
+                    <h2>About PCA Compressor</h2>
+                    <div class="about-content">
+                        <div class="about-section">
+                            <h3>What is PCA?</h3>
+                            <p>Principal Component Analysis (PCA) is a statistical technique that transforms data into a new coordinate system where the greatest variance lies on the first coordinate (principal component). By keeping only the most significant components, we can compress data while preserving the most important information.</p>
+                        </div>
+                        <div class="about-section">
+                            <h3>How It Works</h3>
+                            <div class="algorithm-steps">
+                                <div class="step">
+                                    <div class="step-number">1</div>
+                                    <p>Mean-center the pixel data</p>
+                                </div>
+                                <div class="step">
+                                    <div class="step-number">2</div>
+                                    <p>Compute covariance matrix</p>
+                                </div>
+                                <div class="step">
+                                    <div class="step-number">3</div>
+                                    <p>Perform eigen-decomposition</p>
+                                </div>
+                                <div class="step">
+                                    <div class="step-number">4</div>
+                                    <p>Project onto dominant eigenvectors</p>
+                                </div>
+                                <div class="step">
+                                    <div class="step-number">5</div>
+                                    <p>Reconstruct image from reduced data</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="about-section">
+                            <h3>Technical Details</h3>
+                            <ul>
+                                <li><strong>Per-Channel Mode:</strong> Processes each RGB channel independently using 1D PCA</li>
+                                <li><strong>Joint-Channel Mode:</strong> Treats RGB as 3D vectors for color-aware compression</li>
+                                <li><strong>Orientation Correction:</strong> Uses PCA on pixel distribution to detect rotation</li>
+                                <li><strong>Quality Metrics:</strong> Computes SSIM and PSNR for objective quality assessment</li>
+                            </ul>
+                        </div>
+                        <div class="about-section tech-stack">
+                            <h3>Built With</h3>
+                            <div class="tech-badges">
+                                <span class="badge">Rust</span>
+                                <span class="badge">PCA</span>
+                                <span class="badge">JavaScript</span>
+                                <span class="badge">HTML5 Canvas</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <input type="file" id="fileInput" accept="image/jpeg,image/png" style="display: none;">
+
+    <script type="module" src="app.js"></script>
+</body>
+</html>
