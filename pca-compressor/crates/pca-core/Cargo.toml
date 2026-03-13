@@ -1,0 +1,18 @@
+[package]
+name = "pca-core"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+
+[dependencies]
+image.workspace = true
+nalgebra.workspace = true
+rayon.workspace = true
+thiserror.workspace = true
+serde.workspace = true
+kamadak-exif.workspace = true
+
+[dev-dependencies]
+assert_approx_eq.workspace = true
+anyhow.workspace = true

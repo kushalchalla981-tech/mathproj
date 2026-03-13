@@ -1,0 +1,19 @@
+[package]
+name = "pca-py"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+
+[lib]
+name = "pca_compressor"
+crate-type = ["cdylib"]
+
+[dependencies]
+pca-core = { path = "../pca-core" }
+pyo3.workspace = true
+numpy.workspace = true
+image.workspace = true
+
+[features]
+extension-module = ["pyo3/extension-module"]

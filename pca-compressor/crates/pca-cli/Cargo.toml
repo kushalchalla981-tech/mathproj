@@ -1,0 +1,25 @@
+[package]
+name = "pca-cli"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+
+[[bin]]
+name = "pca-compress"
+path = "src/main.rs"
+
+[dependencies]
+pca-core = { path = "../pca-core" }
+clap.workspace = true
+indicatif.workspace = true
+csv.workspace = true
+anyhow.workspace = true
+rayon.workspace = true
+serde.workspace = true
+serde_yaml = "0.9"
+
+[dev-dependencies]
+assert_cmd = "2.0"
+predicates = "3.0"
+tempfile = "3.8"

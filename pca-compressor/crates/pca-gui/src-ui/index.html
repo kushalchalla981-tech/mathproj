@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PCA Compressor</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div id="app">
+        <!-- Header -->
+        <header>
+            <h1>PCA Compressor</h1>
+            <nav class="nav-buttons">
+                <button id="homeBtn" class="active">Home</button>
+                <button id="workspaceBtn">Workspace</button>
+                <button id="settingsBtn">Settings</button>
+            </nav>
+        </header>
+
+        <!-- Main Content -->
+        <main>
+            <!-- Home Screen -->
+            <div id="homeScreen" class="screen active">
+                <div class="upload-area">
+                    <div id="dropZone" class="drop-zone">
+                        <svg class="upload-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                            <polyline points="17 8 12 3 7 8"></polyline>
+                            <line x1="12" y1="3" x2="12" y2="15"></line>
+                        </svg>
+                        <h2>Drag & Drop Image Here</h2>
+                        <p>or</p>
+                        <button id="selectFileBtn" class="primary-btn">Select File</button>
+                        <p class="supported-formats">Supported formats: JPEG, PNG</p>
+                    </div>
+                </div>
+
+                <div id="recentFiles" class="recent-files">
+                    <h3>Recent Files</h3>
+                    <div id="recentFilesList" class="file-list"></div>
+                </div>
+            </div>
+
+            <!-- Workspace Screen -->
+            <div id="workspaceScreen" class="screen">
+                <div class="workspace-container">
+                    <div class="image-comparison">
+                        <div class="image-panel">
+                            <h3>Original</h3>
+                            <div id="originalPreview" class="image-preview">
+                                <div class="placeholder">No image selected</div>
+                            </div>
+                        </div>
+                        <div class="image-panel">
+                            <h3>Compressed</h3>
+                            <div id="compressedPreview" class="image-preview">
+                                <div class="placeholder">Compress image to see preview</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <aside class="controls-panel">
+                        <div class="control-group">
+                            <label for="quality">Quality</label>
+                            <div class="slider-container">
+                                <input type="range" id="quality" min="0.1" max="1.0" step="0.1" value="0.7">
+                                <span id="qualityValue">0.7</span>
+                            </div>
+                        </div>
+
+                        <div class="control-group">
+                            <label>PCA Mode</label>
+                            <div class="radio-group">
+                                <label><input type="radio" name="mode" value="per-channel" checked> Per-Channel</label>
+                                <label><input type="radio" name="mode" value="joint-channel"> Joint-Channel</label>
+                            </div>
+                        </div>
+
+                        <div class="control-group">
+                            <label for="retainComponents">Retain Components</label>
+                            <input type="number" id="retainComponents" min="1" max="3" value="1">
+                        </div>
+
+                        <div class="control-group">
+                            <label for="orientation">Orientation</label>
+                            <select id="orientation">
+                                <option value="auto">Auto</option>
+                                <option value="exif">EXIF</option>
+                                <option value="disabled">Disabled</option>
+                            </select>
+                        </div>
+
+                        <div class="control-group">
+                            <label>
+                                <input type="checkbox" id="tileProcessing">
+                                Tile Processing
+                            </label>
+                            <input type="number" id="tileSize" placeholder="Tile size (default: 1024)" disabled>
+                        </div>
+
+                        <div class="metrics-panel">
+                            <h3>Metrics</h3>
+                            <div id="metricsDisplay">
+                                <div class="metric">
+                                    <span class="label">Original Size:</span>
+                                    <span class="value" id="originalSize">-</span>
+                                </div>
+                                <div class="metric">
+                                    <span class="label">Compressed Size:</span>
+                                    <span class="value" id="compressedSize">-</span>
+                                </div>
+                                <div class="metric">
+                                    <span class="label">Compression Ratio:</span>
+                                    <span class="value" id="compressionRatio">-</span>
+                                </div>
+                                <div class="metric">
+                                    <span class="label">SSIM:</span>
+                                    <span class="value" id="ssim">-</span>
+                                </div>
+                                <div class="metric">
+                                    <span class="label">PSNR:</span>
+                                    <span class="value" id="psnr">-</span>
+                                </div>
+                                <div class="metric">
+                                    <span class="label">Processing Time:</span>
+                                    <span class="value" id="processingTime">-</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="action-buttons">
+                            <button id="compressBtn" class="primary-btn" disabled>Compress</button>
+                            <button id="exportBtn" class="secondary-btn" disabled>Export</button>
+                        </div>
+                    </aside>
+                </div>
+
+                <div class="status-bar">
+                    <span id="statusText">Ready</span>
+                    <span id="imageInfo"></span>
+                </div>
+            </div>
+
+            <!-- Settings Screen -->
+            <div id="settingsScreen" class="screen">
+                <h2>Settings</h2>
+                <div class="settings-container">
+                    <div class="setting-group">
+                        <h3>Performance</h3>
+                        <div class="setting-item">
+                            <label for="maxMemory">Max Memory (MB)</label>
+                            <input type="number" id="maxMemory" min="128" max="4096" value="1024">
+                        </div>
+                        <div class="setting-item">
+                            <label for="threadCount">Thread Count</label>
+                            <input type="number" id="threadCount" min="1" max="32" value="4">
+                        </div>
+                    </div>
+
+                    <div class="setting-group">
+                        <h3>Preview</h3>
+                        <div class="setting-item">
+                            <label>
+                                <input type="checkbox" id="autoRecompress" checked>
+                                Auto recompress when parameters change
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="setting-group">
+                        <h3>Default Export</h3>
+                        <div class="setting-item">
+                            <label for="defaultFormat">Default Format</label>
+                            <select id="defaultFormat">
+                                <option value="jpeg">JPEG</option>
+                                <option value="png">PNG</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="setting-actions">
+                        <button id="saveSettingsBtn" class="primary-btn">Save Settings</button>
+                        <button id="resetSettingsBtn" class="secondary-btn">Reset to Defaults</button>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <input type="file" id="fileInput" accept="image/jpeg,image/png" style="display: none;">
+    <input type="file" id="exportInput" acceptance="image/jpeg,image/png" style="display: none;">
+
+    <script type="module" src="app.js"></script>
+</body>
+</html>
