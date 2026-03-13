@@ -1,0 +1,602 @@
+# Technical Requirement Document
+
+**Product:** PCA based Image Compression and Orientation Correction
+**Version:** V1 Architecture
+
+---
+
+# 1. System Architecture Overview
+
+The system uses a modular architecture. It separates compute intensive image processing from the interface layer. The goal is predictable performance, easy testing, and long term maintainability.
+
+### Core Architecture Layers
+
+**Client Layer**
+
+* CLI client
+* GUI application
+* External applications using library API
+
+**Service Layer**
+
+* Compression service wrapper
+* Orientation detection module
+* Quality metrics module
+
+**Core Compute Layer**
+
+* PCA compression engine
+* Eigen decomposition module
+* Tile processing engine
+
+**Utility Layer**
+
+* Image loader and decoder
+* Metadata processor
+* Logging and metrics
+
+### Deployment Modes
+
+Three usage modes share the same compute engine.
+
+1. **Local CLI**
+
+   * Single binary
+   * No server required
+
+2. **Local GUI Application**
+
+   * Desktop app calling the local library
+
+3. **Optional Local HTTP Service**
+
+   * For pipelines and integrations
+
+### Logical Flow
+
+1. Image is loaded.
+2. Metadata and EXIF are read.
+3. Image converted to RGB if needed.
+4. Image divided into tiles if large.
+5. Mean centering performed.
+6. Covariance matrix calculated.
+7. Eigen decomposition executed.
+8. Dominant eigenvector projection applied.
+9. Image reconstructed.
+10. Orientation corrected.
+11. SSIM or PSNR calculated.
+12. Output encoded and returned.
+
+---
+
+# 2. Frontend Responsibilities
+
+Frontend includes both **CLI interface** and **GUI application**.
+
+Frontend must remain lightweight. No heavy computation runs here.
+
+### CLI Responsibilities
+
+Input parsing.
+
+Supported flags:
+
+* input path
+* output path
+* compression strength
+* PCA mode
+* tile size
+* orientation override
+* EXIF handling
+* batch folder mode
+
+Execution flow:
+
+1. Validate user input.
+2. Load file or folder.
+3. Send request to compression library.
+4. Display results.
+
+CLI output:
+
+* compression ratio
+* SSIM or PSNR
+* processing time
+* output file path
+
+Batch mode output:
+
+* CSV report
+
+---
+
+### GUI Responsibilities
+
+GUI acts as a visual test interface.
+
+Key functions:
+
+Image preview
+Compression slider
+Export button
+Metrics display
+
+Workflow:
+
+1. User selects image.
+2. GUI sends image to backend.
+3. Backend returns compressed preview.
+4. GUI displays side by side comparison.
+
+Preview refresh must be under **500 ms** for usability.
+
+GUI components:
+
+* Image viewer
+* Compression slider
+* Export panel
+* Metrics display
+
+---
+
+# 3. Backend Responsibilities
+
+Backend contains all processing logic.
+
+### Core Modules
+
+**1. Image Loader**
+
+Responsibilities:
+
+* Decode JPEG and PNG
+* Extract EXIF
+* Convert color spaces
+* Normalize pixel arrays
+
+Supported formats:
+
+* JPEG
+* PNG
+
+---
+
+**2. Preprocessing Module**
+
+Operations:
+
+* Mean centering
+* Tile segmentation
+* Color channel splitting
+
+Output:
+
+* Mean centered pixel matrices
+
+---
+
+**3. PCA Compression Engine**
+
+Steps:
+
+1. Compute covariance matrix
+2. Perform eigen decomposition
+3. Identify dominant eigenvector
+4. Project pixel data
+5. Reconstruct reduced representation
+
+Supports:
+
+* Per channel PCA
+* Joint RGB PCA
+
+---
+
+**4. Tile Processing Engine**
+
+Purpose:
+
+Prevent memory spikes.
+
+Process:
+
+1. Split image into tiles
+2. Apply PCA per tile
+3. Reconstruct tiles
+4. Stitch results
+
+Tile size default:
+
+1024 x 1024
+
+---
+
+**5. Orientation Correction Engine**
+
+Inputs:
+
+* Principal axis
+* EXIF orientation
+
+Logic:
+
+1. Calculate principal orientation vector.
+2. Compare with EXIF orientation.
+3. If variance confidence low, fallback to EXIF.
+
+---
+
+**6. Quality Metric Module**
+
+Supported metrics:
+
+* SSIM
+* PSNR
+
+Purpose:
+
+Evaluate visual similarity between original and reconstructed images.
+
+---
+
+**7. Encoding Module**
+
+Encodes final output.
+
+Supported formats:
+
+* JPEG
+* PNG
+
+Compression level controlled by quality parameter.
+
+---
+
+**8. Logging Module**
+
+Records:
+
+* processing time
+* input size
+* output size
+* compression ratio
+* SSIM
+
+Export formats:
+
+* CSV
+* structured logs
+
+---
+
+# 4. Database Schema Proposal
+
+A database is optional. Only needed when batch runs produce reports or when a service mode is used.
+
+SQLite is sufficient.
+
+### Table: images_processed
+
+| Field              | Type      | Description     |
+| ------------------ | --------- | --------------- |
+| id                 | UUID      | unique record   |
+| filename           | TEXT      | input file      |
+| original_size      | INTEGER   | bytes           |
+| compressed_size    | INTEGER   | bytes           |
+| compression_ratio  | FLOAT     | ratio           |
+| ssim               | FLOAT     | quality metric  |
+| processing_time_ms | INTEGER   | execution time  |
+| orientation_method | TEXT      | pca or exif     |
+| created_at         | TIMESTAMP | processing time |
+
+---
+
+### Table: batch_jobs
+
+| Field           | Type      |
+| --------------- | --------- |
+| id              | UUID      |
+| input_folder    | TEXT      |
+| output_folder   | TEXT      |
+| files_processed | INTEGER   |
+| success_count   | INTEGER   |
+| failure_count   | INTEGER   |
+| started_at      | TIMESTAMP |
+| completed_at    | TIMESTAMP |
+
+---
+
+# 5. API Structure
+
+API exists only for service integration.
+
+Base path:
+
+```
+/v1
+```
+
+---
+
+### Compress Image
+
+```
+POST /v1/compress
+```
+
+Request:
+
+```
+multipart/form-data
+```
+
+Parameters:
+
+| Field             | Type   |
+| ----------------- | ------ |
+| file              | binary |
+| mode              | string |
+| quality           | float  |
+| retain_components | int    |
+| orientation       | string |
+| tile_size         | int    |
+
+Response:
+
+```
+{
+  "compressed_image": bytes,
+  "size_before": int,
+  "size_after": int,
+  "compression_ratio": float,
+  "ssim": float,
+  "orientation_used": "pca"
+}
+```
+
+---
+
+### Batch Compression
+
+```
+POST /v1/compress/batch
+```
+
+Input:
+
+Folder upload or list of images.
+
+Response:
+
+Job ID.
+
+---
+
+### Batch Job Status
+
+```
+GET /v1/batch/{job_id}
+```
+
+Returns:
+
+* processed count
+* failures
+* report file
+
+---
+
+# 6. Authentication Strategy
+
+V1 defaults to **local only processing**.
+
+Authentication required only when API mode is enabled.
+
+Recommended strategy:
+
+API key authentication.
+
+Header:
+
+```
+Authorization: Bearer API_KEY
+```
+
+Key storage:
+
+Local configuration file.
+
+Reasoning:
+
+* simple
+* minimal overhead
+* secure enough for local deployment
+
+Future option:
+
+OAuth or service tokens.
+
+---
+
+# 7. Third Party Dependencies
+
+Dependencies should remain minimal.
+
+### Core Compute
+
+* **Eigen** or **LAPACK** for eigen decomposition
+* **OpenCV** for image decoding
+* **libjpeg-turbo** for fast JPEG encoding
+
+---
+
+### Python Prototype
+
+* NumPy
+* Pillow
+* scikit-image for SSIM
+
+---
+
+### GUI Framework
+
+Recommended:
+
+* **Qt**
+* **Electron** only if web stack required
+
+Qt preferred for performance and simplicity.
+
+---
+
+### Logging
+
+* spdlog or Rust tracing
+
+---
+
+# 8. Scalability Considerations
+
+System must handle both single images and batch workloads.
+
+### Memory Control
+
+Tile based processing prevents loading full image matrices.
+
+User configurable limit:
+
+```
+--max-ram
+```
+
+---
+
+### CPU Parallelism
+
+Batch jobs run across worker threads.
+
+Thread model:
+
+```
+worker_pool = CPU cores - 1
+```
+
+Each worker processes one image.
+
+---
+
+### Streaming Covariance
+
+For extremely large images:
+
+* incremental covariance calculation
+* avoids full matrix storage
+
+---
+
+### Horizontal Scaling
+
+If deployed as API service:
+
+Scaling strategy:
+
+Stateless workers.
+
+Architecture:
+
+```
+Load Balancer
+      |
+Compression Workers
+```
+
+Workers store temporary files locally.
+
+Results returned immediately.
+
+No shared state required.
+
+---
+
+### GPU Acceleration (Future)
+
+Potential integration:
+
+* CUDA
+* OpenCL
+
+Operations suitable for GPU:
+
+* matrix multiplication
+* covariance calculation
+
+Not required for V1.
+
+---
+
+# 9. Stability and Reliability Practices
+
+### Deterministic Processing
+
+Algorithm must produce identical output for same inputs.
+
+Use fixed numerical routines.
+
+---
+
+### Validation
+
+Input validation checks:
+
+* corrupted files
+* unsupported formats
+* invalid metadata
+
+---
+
+### Test Coverage
+
+Test groups:
+
+* unit tests for PCA math
+* integration tests for compression pipeline
+* stress tests for large images
+* batch pipeline tests
+
+---
+
+### Performance Monitoring
+
+Metrics to track:
+
+* average processing time
+* memory usage
+* compression ratio distribution
+* SSIM distribution
+
+---
+
+# 10. Recommended Technology Stack
+
+| Layer            | Technology    |
+| ---------------- | ------------- |
+| Core engine      | C++ or Rust   |
+| Prototype        | Python        |
+| GUI              | Qt            |
+| CLI              | Native binary |
+| Image processing | OpenCV        |
+| Linear algebra   | Eigen         |
+| Metrics          | scikit-image  |
+| Storage          | SQLite        |
+
+---
+
+This architecture ensures:
+
+* deterministic compression
+* high performance
+* small runtime footprint
+* simple deployment
+* maintainable long term structure.
+
+If needed, the next step can define the **exact internal module structure and repository layout for the implementation**.

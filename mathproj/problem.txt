@@ -1,0 +1,1 @@
+Develop an algorithm for image compression and orientation correction that computes the covariance matrix of mean-centered image pixel data, performs eigen-decomposition to identify the principal axes of variance, and projects the multi-dimensional image data onto the dominant eigenvector to achieve dimensionality reduction while preserving maximum visual information.

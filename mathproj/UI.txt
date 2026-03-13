@@ -1,0 +1,506 @@
+Screen design must support three main use contexts. GUI preview, parameter adjustment, export. Batch and CLI flows remain terminal driven and do not require GUI surfaces. The GUI should remain minimal and optimized for quick experimentation with compression strength and algorithm modes.
+
+---
+
+SCREEN LIST
+
+1. Launch / Home
+2. Image Workspace
+3. Compression Controls Panel
+4. Export Dialog
+5. Batch Report Viewer
+6. Settings
+7. Error / Unsupported Image Screen
+
+---
+
+HOME SCREEN
+
+Purpose
+Entry point. Allows the user to load an image quickly.
+
+Layout hierarchy
+
+Top bar
+• App name
+• Settings icon
+
+Main body centered vertically
+
+Primary action card
+• Large upload area
+• Drag and drop region
+• “Open Image” button
+
+Secondary area
+
+Recent files list
+• Thumbnail
+• File name
+• Last modified time
+
+Footer
+
+• Supported formats note (JPEG, PNG)
+
+Component breakdown
+
+• Drag and drop upload component
+• File picker button
+• Recent file list
+• Top navigation bar
+
+Interaction logic
+
+• Drag image into drop zone → open workspace
+• Click Open Image → file picker → workspace
+• Click recent file → workspace loads image
+
+Empty state
+
+Recent files
+Text: “No images opened yet”
+
+Error states
+
+Invalid format
+Message:
+“Unsupported format. Use JPEG or PNG.”
+
+Corrupt file
+Message:
+“Image cannot be decoded.”
+
+---
+
+IMAGE WORKSPACE SCREEN
+
+Purpose
+Primary working area for compression preview and tuning.
+
+Layout hierarchy
+
+Top navigation bar
+
+• Back to Home
+• File name
+• Export button
+
+Main layout split horizontally
+
+Left panel (Original image)
+
+• Image viewer
+• Zoom controls
+
+Right panel (Compressed preview)
+
+• Image viewer
+• Zoom controls
+
+Bottom section
+
+Compression summary strip
+
+• Estimated output size
+• Compression ratio
+• SSIM score
+• Processing time
+
+Right sidebar
+
+Compression Controls Panel
+
+Component breakdown
+
+Image viewers
+
+• Pan
+• Zoom
+• Fit to screen
+
+Comparison features
+
+• Side by side layout
+• Optional swipe comparison slider
+
+Summary indicators
+
+• File size before
+• File size after
+• SSIM metric
+• Processing time
+
+Interaction logic
+
+• Opening image automatically computes default compression
+• Changing compression slider triggers recomputation
+• Preview updates live
+
+Preview recomputation flow
+
+1. User adjusts compression strength
+2. Image is mean centered
+3. PCA computed
+4. Projection reconstructed
+5. Preview refreshed
+
+Zoom behavior
+
+• Zoom applies independently per viewer
+• Option to sync zoom between panels
+
+Empty states
+
+Before preview computation
+
+Right preview shows placeholder
+
+Text:
+“Compression preview will appear here.”
+
+Error states
+
+Processing failure
+
+Message
+“Compression failed. Try adjusting parameters.”
+
+Memory limit reached
+
+Message
+“Image too large for current memory limit.”
+
+Action
+Suggest enabling tile processing.
+
+---
+
+COMPRESSION CONTROLS PANEL
+
+Purpose
+Expose minimal algorithm parameters.
+
+Layout hierarchy
+
+Section 1
+Compression strength
+
+• Slider control
+Range
+0.1 to 1.0
+
+Section 2
+PCA mode
+
+Radio group
+
+• Per channel
+• Joint channel
+
+Section 3
+Retained components
+
+Stepper input
+
+• Integer value
+
+Section 4
+Orientation correction
+
+Dropdown
+
+• Auto (PCA)
+• EXIF
+• Disabled
+
+Section 5
+Processing options
+
+• Tile processing toggle
+• Tile size input
+
+Component breakdown
+
+• Slider
+• Radio buttons
+• Stepper number input
+• Dropdown
+• Toggle switches
+
+Interaction logic
+
+Slider adjustment
+
+• Recompute compression preview
+
+Mode change
+
+• Recompute PCA with new covariance calculation
+
+Orientation change
+
+• Recompute orientation correction
+
+Tile toggle
+
+• Enable tile size input
+
+Empty states
+
+Not applicable
+
+Error states
+
+Invalid parameter combination
+
+Example
+
+Joint mode with invalid component count
+
+Message
+“Selected component count exceeds channel dimension.”
+
+---
+
+EXPORT DIALOG
+
+Purpose
+Allow the user to save the compressed image.
+
+Layout hierarchy
+
+Modal window centered
+
+Section 1
+Output format
+
+• JPEG
+• PNG
+
+Section 2
+Metadata
+
+• Preserve EXIF toggle
+• Strip metadata toggle
+
+Section 3
+File destination
+
+• File path selector
+
+Section 4
+Export summary
+
+• Final size estimate
+• Compression ratio
+
+Bottom actions
+
+• Cancel
+• Export
+
+Component breakdown
+
+• Radio selection
+• Toggle switches
+• Path picker
+• Export button
+
+Interaction logic
+
+User selects format
+
+System recalculates size estimate
+
+User clicks Export
+
+System writes file
+
+Success confirmation appears.
+
+Empty states
+
+None
+
+Error states
+
+Write permission failure
+
+Message
+“Unable to save file at selected location.”
+
+Disk full
+
+Message
+“Not enough storage to export file.”
+
+---
+
+BATCH REPORT VIEWER
+
+Purpose
+Display results after batch CLI processing.
+
+Layout hierarchy
+
+Top bar
+
+• Batch job title
+• Export CSV button
+
+Main content
+
+Table view
+
+Columns
+
+• File name
+• Original size
+• Compressed size
+• Compression ratio
+• SSIM
+• Processing time
+
+Right panel
+
+Selected image preview
+
+Component breakdown
+
+• Data table
+• Sortable columns
+• Row selection
+• Preview viewer
+
+Interaction logic
+
+Click row
+
+Preview updates
+
+Export CSV
+
+Downloads report.
+
+Empty state
+
+No batch results yet
+
+Text
+“Run batch compression from CLI to view reports.”
+
+Error states
+
+CSV load error
+
+Message
+“Report file could not be parsed.”
+
+---
+
+SETTINGS SCREEN
+
+Purpose
+Global configuration.
+
+Layout hierarchy
+
+Sections
+
+Performance
+
+• Max RAM per process
+• Thread count
+
+Preview behavior
+
+• Auto recompute toggle
+
+Metrics
+
+• Default quality metric
+SSIM or PSNR
+
+Default export
+
+• Default output format
+
+Component breakdown
+
+• Numeric inputs
+• Toggles
+• Dropdowns
+
+Interaction logic
+
+Changes saved automatically.
+
+Error states
+
+Invalid memory value
+
+Message
+“Memory limit must be greater than 256 MB.”
+
+---
+
+ERROR / UNSUPPORTED IMAGE SCREEN
+
+Purpose
+Handle unsupported images or algorithm failures.
+
+Layout hierarchy
+
+Centered error card
+
+Icon
+
+Error title
+
+Detailed explanation
+
+Actions
+
+• Retry
+• Open different image
+• Return home
+
+Common cases
+
+Very small image
+
+Message
+“Image too small for PCA compression. Returning original recommended.”
+
+Animated GIF
+
+Message
+“Animated images are not supported in this version.”
+
+CMYK image conversion warning
+
+Message
+“Image converted from CMYK to RGB. Minor color shift possible.”
+
+---
+
+SCALABILITY CONSIDERATIONS
+
+The layout supports future expansion without redesign.
+
+Possible additions
+
+• Multi component visualization
+• Hybrid compression mode
+• Tile boundary visualization
+• Histogram of eigenvalues
+• Quality heatmaps
+
+Controls panel can expand vertically without affecting workspace.
+
+Preview layout supports adding a third comparison mode such as swipe or overlay.
+
+---
+
+If needed, the next step can be a **UX wireframe structure** or **design system component list** for implementation.

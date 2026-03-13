@@ -1,0 +1,231 @@
+# Product Requirements Document — PCA-based Image Compression and Orientation Correction (V1)
+
+## Purpose
+
+Build a focused V1 tool that compresses images and corrects orientation using principal component analysis on image pixel data. The algorithm must compute a covariance matrix on mean-centered pixels, perform eigen-decomposition, use the dominant eigenvector for dimensionality reduction, and output visually preserved, smaller files. Deliver a usable product you can test and ship quickly.
+
+## Problem statement
+
+Images consume storage and bandwidth. Existing codecs trade quality and size in ways that sometimes lose important visual structure. You need a deterministic algorithm that:
+
+* automatically orients images correctly,
+* reduces dimensionality by projecting onto the dominant axis of pixel variance,
+* preserves perceptual visual information while reducing file size,
+* is simple enough to run on common devices or a cloud endpoint.
+
+## Target user
+
+Primary: Developers and researchers who need a lightweight, explainable compressor for preprocessing, archival, or bandwidth-constrained upload pipelines.
+Secondary: Power users and photographers who want deterministic, explainable compression as an alternative to standard codecs.
+
+## Value proposition
+
+You offer a transparent, tunable compressor that:
+
+* corrects orientation without relying only on EXIF,
+* reduces size while retaining principal visual features,
+* exposes algorithm parameters for experimentation,
+* integrates as a CLI, library, and simple GUI for manual testing.
+
+## Core user flows
+
+1. Single-image CLI flow
+
+   * You run `compress input.jpg --quality 0.7 --mode per-channel`.
+   * Tool loads file, reads EXIF.
+   * Tool mean-centers pixel data, computes covariance, performs eigen-decomposition.
+   * Tool computes dominant eigenvector, projects data, reconstructs image at requested compression level.
+   * Tool auto-corrects orientation using principal axis, or uses EXIF if explicit override.
+   * Tool writes `input.compressed.jpg` and prints compression ratio and quality metrics.
+
+2. Single-image GUI flow
+
+   * You open an image in the app.
+   * App displays original and preview of reconstructed image side by side.
+   * You adjust a single slider for compression strength.
+   * App shows estimated file size and a quality score.
+   * You export the result.
+
+3. Batch processing flow
+
+   * You point the CLI at a folder.
+   * Tool processes images sequentially or in worker threads.
+   * Output files go to a target folder.
+   * Tool produces a CSV report with original size, compressed size, processing time, SSIM estimate.
+
+4. Library/API flow
+
+   * You call `compress(image_bytes, params)` from your pipeline.
+   * Service returns compressed bytes and orientation-corrected image metadata.
+
+## Functional requirements (MVP)
+
+Algorithm and processing
+
+* Compute mean across pixel vectors.
+* Build covariance matrix on mean-centered data.
+* Perform eigen-decomposition.
+* Use the dominant eigenvector to project data for dimensionality reduction.
+* Reconstruct image from projection with optional retained components count.
+* Correct orientation using principal axis; fall back to EXIF when orientation signal is weak.
+* Support per-channel processing (RGB independently) and combined-channel processing (color vector treated jointly).
+* Operate on blocks or tiles to limit memory use for large images.
+
+I/O and UX
+
+* CLI: single-image, folder batch, parameter flags.
+* Minimal GUI: open, preview, slider for compression strength, export.
+* Library: single-function API with clear params and return object.
+* Output formats: JPEG and PNG. JPEG default for lossy mode.
+* Preserve or strip EXIF per user setting.
+
+Performance and quality
+
+* Process a 12MP image within a target budget on desktop hardware.
+* Provide estimated compression ratio and one perceptual metric (SSIM or PSNR) in output.
+* Allow users to pick a target compression ratio or target retained components.
+
+Telemetry and logging
+
+* Log processing time, input size, output size, SSIM estimate.
+* Batch report export as CSV.
+
+Security and privacy
+
+* Local-only processing by default.
+* If cloud API exists, secure transport and explicit consent required.
+
+## Non-functional requirements
+
+* Implement core algorithm in a performant language for the library (C++ or Rust), with Python bindings for prototyping.
+* GUI in a lightweight cross-platform framework.
+* Memory limit: allow user to set max RAM per process.
+* Concurrency: support multi-threaded batch processing.
+
+## MVP feature list (deliverable for V1)
+
+Essential
+
+* Single-image CLI compressor.
+* Per-channel and joint-channel PCA modes.
+* Orientation correction using principal axis, with EXIF fallback.
+* Preview GUI with compression slider and side-by-side view.
+* Batch CLI with CSV report.
+* Library API with documented parameters.
+* Output as JPEG and PNG.
+* Basic perceptual metric reporting (SSIM or PSNR).
+* Tiling/block processing for large images.
+
+Nice-to-have but deferred to future
+
+* Progressive compression streaming.
+* Animated GIF and video frame support.
+* Mobile native app.
+* Perceptual tuning guided by machine-learned models.
+* Cloud auto-scaling API with SLA.
+
+## Future features (post-V1)
+
+* Hybrid mode combining PCA projection with standard codecs for better size-quality trade-offs.
+* Multi-component retention heuristics based on scene complexity.
+* Face and text aware preservation.
+* Plugin for image editors and CMS.
+* Real-time mobile capture integration.
+
+## Edge cases and handling
+
+* Very small images, e.g., <64x64: return original or use lossless mode.
+* Monochrome or single-color images: detect low-rank data and set minimal retained components.
+* Transparent images: preserve alpha channel separately; apply PCA to RGB only.
+* Corrupted images: validate input, reject with clear error.
+* CMYK or non-RGB color spaces: convert to RGB, record original color space, document conversion loss.
+* Animated GIFs: out of scope for V1, return error or first-frame-only with clear message.
+* EXIF conflict with principal axis: show user both options, default to principal axis for scientific correctness.
+* Extremely large images: auto-tile and process tiles independently, then stitch with seam-aware blending to avoid artifacts.
+* Images with embedded color profiles: convert to sRGB for processing, reapply profile as an option when exporting.
+
+## Non-goals
+
+* Replace mainstream image codecs like JPEG and WebP entirely.
+* Real-time streaming on constrained IoT devices in V1.
+* Automatic semantic preservation like face-first or text-first by default.
+* Complex GUI features beyond preview and export.
+* Full metadata or rights management workflows.
+
+## Acceptance criteria for V1
+
+* CLI compresses single image and writes output.
+* GUI shows side-by-side preview and allows export.
+* Library API compresses and returns bytes with orientation corrected.
+* Batch CLI produces CSV report containing size and processing time.
+* Algorithm documentation describes mean-centering, covariance computation, eigen-decomposition steps, and projection math.
+* Unit tests cover small, medium, and large images, alpha channel handling, and EXIF vs principal-axis orientation.
+* Performance tests demonstrate processing a 12MP image within the target budget on a representative desktop.
+* Basic SSIM or PSNR metric reported per processed image.
+
+## Success metrics
+
+Algorithmic and quality
+
+* Median compression ratio at target quality level, e.g., 2x to 5x depending on quality setting.
+* Median SSIM above 0.90 at default compression setting.
+* Visual acceptance rate above 90% in small user test panel for default setting.
+
+Product adoption and reliability
+
+* CLI/library installs and runs without errors on target platforms for 95% of sample images.
+* Batch processing completion rate above 99% for tested dataset.
+* Mean processing time per 12MP image meets target budget.
+* Number of integrations or downloads for the library or CLI.
+
+Operational
+
+* Number of bugs per release. Zero critical regressions for core flows.
+* User-reported satisfaction score for output quality with default settings, target 4/5.
+
+## Risks and mitigations
+
+Risk: PCA projection may remove fine details users consider important.
+Mitigation: expose retained component count, provide preview, allow user to pick higher retention or hybrid mode.
+
+Risk: Performance or memory spikes on large images.
+Mitigation: tile-based processing, streaming covariance approximation, memory cap.
+
+Risk: Orientation correction may disagree with user intent.
+Mitigation: allow explicit EXIF override, preview before export.
+
+Risk: Users compare with optimized codecs and prefer those.
+Mitigation: position this tool for explainability, experiment use, and preprocess pipelines, not general consumer replacement.
+
+## Implementation notes and developer constraints
+
+* Start with a reference prototype in Python using NumPy for correctness.
+* Move core compute to a compiled library for performance.
+* Implement covariance via incremental algorithms for tiled processing.
+* Use robust numerical eigen-decomposition routines to handle degenerate covariance matrices.
+* Provide clear API for per-channel and joint-channel modes.
+* Provide tooling to compute SSIM and PSNR for QA.
+* Document computational complexity and expected memory profile.
+
+## Roadmap (high level)
+
+Phase 0, weeks 0–4: prototype algorithm, CLI single-image, basic tests.
+Phase 1, weeks 4–8: GUI preview, batch CLI, library API, tile processing.
+Phase 2, weeks 8–12: performance optimization, platform builds, documentation, user testing.
+Phase 3, post-V1: hybrid modes, advanced heuristics, plugin integrations.
+
+## Deliverables for V1
+
+* Working CLI with single-image and batch modes.
+* Minimal GUI with preview and export.
+* Library API with bindings and docs.
+* Test suite and performance report.
+* Short engineering runbook describing tiling, memory tuning, and parameter effects.
+
+## Appendix: Minimal API spec (example)
+
+`compress(image_bytes, mode='per-channel', retain_components=1, quality=0.7, orientation='auto', tile_size=1024) -> {bytes: compressed_bytes, size_before: int, size_after: int, ssim: float, orientation_used: 'pca'|'exif'}`
+
+---
+
+Keep scope tight. Deliver the core algorithm, usable CLI, preview GUI, and the library API. Prioritize correctness, explainability, and predictable quality over broad feature coverage.
