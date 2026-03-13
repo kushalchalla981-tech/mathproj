@@ -11,6 +11,9 @@
 </head>
 <body>
     <div class="noise-overlay"></div>
+    <div class="color-glow glow-cyan"></div>
+    <div class="color-glow glow-amber"></div>
+    <div class="color-glow glow-magenta"></div>
 
     <div id="app">
         <!-- Mathematical Background Grid -->
@@ -20,10 +23,12 @@
             <div class="grid-line grid-line-3"></div>
             <div class="grid-line grid-line-4"></div>
             <div class="grid-line grid-line-5"></div>
-            <div class="floating-symbol symbol-1">λ₁</div>
-            <div class="floating-symbol symbol-2">∑</div>
-            <div class="floating-symbol symbol-3">Σ</div>
-            <div class="floating-symbol symbol-4">∫</div>
+            <div class="floating-symbol symbol-1 text-cyan">λ₁</div>
+            <div class="floating-symbol symbol-2 text-amber">∑</div>
+            <div class="floating-symbol symbol-3 text-magenta">Σ</div>
+            <div class="floating-symbol symbol-4 text-cyan">∫</div>
+            <div class="loating-symbol symbol-5 text-amber">α</div>
+            <div class="floating-symbol symbol-6 text-magenta">β</div>
         </div>
 
         <!-- Header -->
@@ -61,52 +66,276 @@
                 <div class="hero">
                     <div class="hero-content">
                         <div class="hero-meta">
-                            <span class="hero-tag">IMAGE COMPRESSION</span>
-                            <span class="hero-divider">//</span>
-                            <span class="hero-year">2026</span>
+                            <span class="hero-tag gradient-text-cyan">IMAGE COMPRESSION</span>
+                            <span class="hero-divider">/</span>
+                            <span class="hero-year text-amber">2026</span>
                         </div>
                         <h1 class="hero-title">
                             <span class="title-line title-line-1">Principal</span>
-                            <span class="title-line title-line-2">Component</span>
+                            <span class="title-line title-line-2 gradient-text-amber">Component</span>
                             <span class="title-line title-line-3">Analysis</span>
                         </h1>
                         <p class="hero-subtitle">
                             An exploration of dimensionality reduction through eigen-decomposition
                         </p>
                         <div class="hero-actions">
-                            <button id="uploadBtn" class="btn btn-primary">
+                            <button id="uploadBtn" class="btn btn-gradient">
                                 <span class="btn-text">Load Image</span>
                                 <span class="btn-icon">→</span>
                             </button>
                         </div>
                     </div>
                     <div class="hero-visual">
-                        <div class="formula-display">
+                        <div class="formula-display formula-enhanced">
+                            <div class="formula-title gradient-text-cyan">Covariance Matrix</div>
                             <div class="formula-row formula-row-1">
-                                <span class="formula-var">C</span>
-                                <span class="formula-op">=</span>
-                                <span class="formula-sum">∑</span>
-                                <span class="formula-paren">(</span>
-                                <span class="formula-var">x</span>
+                                <span class="formula-var text-cyan">C</span>
+                                <span class="formula-op text-muted">=</span>
+                                <span class="formula-sum text-amber">∑</span>
+                                <span class="formula-paren text-muted">(</span>
+                                <span class="formula-var text-cyan">x</span>
                                 <span class="formula-sub">i</span>
-                                <span class="formula-op">-</span>
-                                <span class="formula-var">μ</span>
-                                <span class="formula-paren">)</span>
-                                <span class="formula-paren">(</span>
-                                <span class="formula-var">x</span>
+                                <span class="formula-op text-muted">-</span>
+                                <span class="formula-var text-magenta">μ</span>
+                                <span class="formula-paren text-muted">)</span>
+                                <span class="formula-paren text-muted">(</span>
+                                <span class="formula-var text-cyan">x</span>
                                 <span class="formula-sub">i</span>
-                                <span class="formula-op">-</span>
-                                <span class="formula-var">μ</span>
-                                <span class="formula-paren">)</span>
-                                <sup class="formula-sup">T</sup>
+                                <span class="formula-op text-muted">-</span>
+                                <span class="formula-var text-magenta">μ</span>
+                                <span class="formula-paren text-muted">)</span>
+                                <sup class="formula-sup text-amber">T</sup>
                             </div>
+                            <div class="formula-divider"></div>
+                            <div class="formula-title gradient-text-amber">Eigen-Decomposition</div>
                             <div class="formula-row formula-row-2">
-                                <span class="formula-var"> eigen</span>
-                                <span class="formula-paren">(</span>
-                                <span class="formula-var">C</span>
-                                <span class="formula-paren">)</span>
-                                <span class="formula-op">→</span>
-                                <span class="formula-highlight">λ</span>
+                                <span class="formula-var text-cyan">C</span>
+                                <span class="formula-var text-cyan">v</span>
+                                <span class="formula-sub">i</span>
+                                <span class="formula-op text-muted">=</span>
+                                <span class="formula-var text-amber">λ</span>
+                                <span class="formula-sub">i</span>
+                                <span class="formula-var text-cyan">v</span>
+                                <span class="formula-sub">i</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PCA Explanation Section -->
+                <div class="explanation-section">
+                    <div class="section-header-centered">
+                        <span class="section-tag text-magenta">UNDERSTANDING PCA</span>
+                        <h2 class="section-title-centered">
+                            <span class="gradient-text-cyan">How It Works</span>
+                        </h2>
+                    </div>
+
+                    <div class="explanation-grid">
+                        <div class="explanation-card card-cyan">
+                            <div class="card-icon-wrapper ring-cyan">
+                                <svg class="card-icon" viewBox="0 0 48 48" fill="none" stroke="currentColor">
+                                    <circle cx="24" cy="24" r="16" stroke-width="1.5"/>
+                                    <path d="M24 12 L24 36 M12 24 L36 24" stroke-width="1"/>
+                                    <circle cx="24" cy="12" r="2" fill="currentColor"/>
+                                    <circle cx="24" cy="36" r="2" fill="currentColor"/>
+                                    <circle cx="12" cy="24" r="2" fill="currentColor"/>
+                                    <circle cx="36" cy="24" r="2" fill="currentColor"/>
+                                </svg>
+                            </div>
+                            <h3 class="card-title text-cyan">1. Center Data</h3>
+                            <p class="card-text">Subtract the <span class="text-amber">mean</span> from each data point. This shifts the origin to the center of our data cloud.</p>
+                            <div class="card-formula">
+                                <span class="formula-mini text-cyan">x'</span>
+                                <span class="formula-mini text-muted">=</span>
+                                <span class="formula-mini text-cyan">x</span>
+                                <span class="formula-mini text-muted">-</span>
+                                <span class="formula-mini text-magenta">μ</span>
+                            </div>
+                        </div>
+
+                        <div class="explanation-card card-amber">
+                            <div class="card-icon-wrapper ring-amber">
+                                <svg class="card-icon" viewBox="0 0 48 48" fill="none" stroke="currentColor">
+                                    <rect x="8" y="8" width="32" height="32" rx="2" stroke-width="1.5"/>
+                                    <path d="M12 36 L20 28 L28 32 L36 20" stroke-width="1.5" stroke-linecap="round"/>
+                                    <circle cx="20" cy="28" r="2" fill="currentColor"/>
+                                    <circle cx="28" cy="32" r="2" fill="currentColor"/>
+                                    <circle cx="36" cy="20" r="2" fill="currentColor"/>
+                                </svg>
+                            </div>
+                            <h3 class="card-title text-amber">2. Find Variance</h3>
+                            <p class="card-text">Compute the <span class="text-cyan">covariance matrix</span> to understand how pixels vary and relate to each other.</p>
+                            <div class="card-formula">
+                                <span class="formula-mini text-cyan">C</span>
+                                <span class="formula-mini text-muted">=</span>
+                                <span class="formula-mini text-cyan">cov</span>
+                                <span class="formula-mini text-muted">(</span>
+                                <span class="formula-mini text-amber">X</span>
+                                <span class="formula-mini text-muted">)</span>
+                            </div>
+                        </div>
+
+                        <div class="explanation-card card-magenta">
+                            <div class="card-icon-wrapper ring-magenta">
+                                <svg class="card-icon" viewBox="0 0 48 48" fill="none" stroke="currentColor">
+                                    <line x1="8" y1="40" x2="40" y2="40" stroke-width="1.5"/>
+                                    <line x1="8" y1="40" x2="8" y2="16" stroke-width="1.5"/>
+                                    <path d="M8 32 L16 24 L24 28 L40 12" stroke-width="1.5" stroke-linecap="round"/>
+                                    <circle cx="16" cy="24" r="2" fill="currentColor"/>
+                                    <circle cx="24" cy="28" r="2" fill="currentColor"/>
+                                    <circle cx="40" cy="12" r="2" fill="currentColor"/>
+                                </svg>
+                            </div>
+                            <h3 class="card-title text-magenta">3. Principal Axes</h3>
+                            <p class="card-text">Find <span class="text-amber">eigenvectors</span> — the directions of maximum variance — and their <span class="text-cyan">eigenvalues</span>.</p>
+                            <div class="card-formula">
+                                <span class="formula-mini text-amber">λ</span>
+                                <span class="formula-mini text-muted">≥</span>
+                                <span class="formula-mini text-amber">λ</span>
+                                <span class="formula-mini text-muted">≥</span>
+                                <span class="formula-mini text-amber">λ</span>
+                                <span class="formula-mini text-muted">≥</span>
+                                <span class="formula-mini text-amber">…</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- PCA Process Visualization -->
+                    <div class="process-visualization">
+                        <div class="process-steps">
+                            <div class="process-step step-1">
+                                <div class="step-number">1</div>
+                                <div class="step-content">
+                                    <span class="step-label text-cyan">Original Space</span>
+                                    <span class="step-desc">Full dimensional data</span>
+                                </div>
+                                <div class="step-shape shape-original"></div>
+                            </div>
+                            <div class="process-arrow">
+                                <svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="1">
+                                    <path d="M0 20 L30 20 M24 14 L32 20 L24 26" class="arrow-cyan"/>
+                                </svg>
+                            </div>
+                            <div class="process-step step-2">
+                                <div class="step-number">2</div>
+                                <div class="step-content">
+                                    <span class="step-label text-amber">Transformation</span>
+                                    <span class="step-desc">Rotate to eigenbasis</span>
+                                </div>
+                                <div class="step-shape shape-transform"></div>
+                            </div>
+                            <div class="process-arrow">
+                                <svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="1">
+                                    <path d="M0 20 L30 20 M24 14 L32 20 L24 26" class="arrow-amber"/>
+                                </svg>
+                            </div>
+                            <div class="process-step step-3">
+                                <div class="step-number">3</div>
+                                <div class="step-content">
+                                    <span class="step-label text-magenta">Projection</span>
+                                    <span class="step-desc">Keep k dimensions</span>
+                                </div>
+                                <div class="step-shape shape-projected"></div>
+                            </div>
+                            <div class="process-arrow">
+                                <svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="1">
+                                    <path d="M0 20 L30 20 M24 14 L32 20 L24 26" class="arrow-magenta"/>
+                                </svg>
+                            </div>
+                            <div class="process-step step-4">
+                                <div class="step-number">4</div>
+                                <div class="step-content">
+                                    <span class="step-label gradient-text-cyan">Reconstruction</span>
+                                    <span class="step-desc">Approximate original</span>
+                                </div>
+                                <div class="step-shape shape-reconstructed"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Key Formulas Section -->
+                    <div class="formulas-section">
+                        <div class="formulas-header">
+                            <span class="formulas-tag text-amber">MATHEMATICS</span>
+                            <h3>Core Formulas</h3>
+                        </div>
+                        <div class="formulas-grid">
+                            <div class="formula-box box-cyan">
+                                <span class="formula-label text-cyan">Mean Vector</span>
+                                <div class="formula-display-mini">
+                                    <span class="formula-text text-cyan">μ</span>
+                                    <span class="formula-text text-muted">=</span>
+                                    <span class="formula-sum text-amber">∑</span>
+                                    <span class="formula-sub-mini">i=1</span>
+                                    <span class="formula-sup-mini">n</span>
+                                    <span class="formula-text text-cyan">x</span>
+                                    <span class="formula-sub-mini">i</span>
+                                    <span class="formula-op text-muted">/</span>
+                                    <span class="formula-text text-cyan">n</span>
+                                </div>
+                            </div>
+                            <div class="formula-box box-amber">
+                                <span class="formula-label text-amber">Covariance</span>
+                                <div class="formula-display-mini">
+                                    <span class="formula-text text-cyan">cov</span>
+                                    <span class="formula-paren-mini text-muted">(</span>
+                                    <span class="formula-text text-cyan">x,y</span>
+                                    <span class="formula-paren-mini text-muted">)</span>
+                                    <span class="formula-text text-muted">=</span>
+                                    <span class="formula-formula-mini">E[xy] - E[x]E[y]</span>
+                                </div>
+                            </div>
+                            <div class="formula-box box-magenta">
+                                <span class="formula-label text-magenta">Eigenvalue Problem</span>
+                                <div class="formula-display-mini">
+                                    <span class="formula-paren-mini text-muted">(</span>
+                                    <span class="formula-text text-cyan">C</span>
+                                    <span class="formula-op text-muted">-</span>
+                                    <span class="formula-text text-amber">λI</span>
+                                    <span class="formula-paren-mini text-muted">)</span>
+                                    <span class="formula-text text-cyan">v</span>
+                                    <span class="formula-text text-muted">=</span>
+                                    <span class="formula-text text-muted">0</span>
+                                </div>
+                            </div>
+                            <div class="formula-box box-cyan">
+                                <span class="formula-label text-cyan">Projection</span>
+                                <div class="formula-display-mini">
+                                    <span class="formula-text text-amber">y</span>
+                                    <span class="formula-text text-muted">=</span>
+                                    <span class="formula-text text-cyan">P</span>
+                                    <span class="formula-text text-cyan">x</span>
+                                    <span class="formula-text text-muted">=</span>
+                                    <span class="formula-sum text-magenta">∑</span>
+                                    <span class="formula-text text-amber">v</span>
+                                    <span class="formula-sup-mini">T</span>
+                                    <span class="formula-text text-cyan">x</span>
+                                </div>
+                            </div>
+                            <div class="formula-box box-amber">
+                                <span class="formula-label text-amber">Reconstruction</span>
+                                <div class="formula-display-mini">
+                                    <span class="formula-text text-cyan">x̂</span>
+                                    <span class="formula-text text-muted">=</span>
+                                    <span class="formula-text text-cyan">P</span>
+                                    <span class="formula-sup-mini">T</span>
+                                    <span class="formula-text text-cyan">y</span>
+                                    <span class="formula-text text-muted">=</span>
+                                    <span class="formula-sum text-magenta">∑</span>
+                                    <span class="formula-text text-amber">v</span>
+                                    <span class="formula-text text-cyan">v</span>
+                                    <span class="formula-sup-mini">T</span>
+                                    <span class="formula-text text-cyan">x</span>
+                                </div>
+                            </div>
+                            <div class="formula-box box-magenta">
+                                <span class="formula-label text-magenta">SSIM Metric</span>
+                                <div class="formula-display-mini">
+                                    <span class="formula-formula-mini">(2μₓμᵧ+C₁)(2σₓᵧ+C₂)</span>
+                                    <span class="formula-divider-mini text-muted">—</span>
+                                    <span class="formula-formula-mini">(μₓ²+μᵧ²+C₁)(σₓ²+σᵧ²+C₂)</span>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -139,7 +368,7 @@
             <div id="workspaceScreen" class="screen">
                 <div class="workspace-header">
                     <div class="workspace-meta">
-                        <span class="workspace-label">COMPRESSION MATRIX</span>
+                        <span class="workspace-label gradient-text-cyan">COMPRESSION MATRIX</span>
                         <span class="workspace-id">ID: <span id="imageId">—</span></span>
                     </div>
                 </div>
@@ -193,19 +422,19 @@
                     <aside class="workspace-controls">
                         <div class="controls-section">
                             <div class="section-header">
-                                <span class="section-number">01</span>
+                                <span class="section-number text-amber">01</span>
                                 <span class="section-title">Parameters</span>
                             </div>
 
                             <div class="control-group">
                                 <label class="control-label">
                                     <span>Quality</span>
-                                    <span class="control-value" id="qualityValueDisplay">0.70</span>
+                                    <span class="control-value text-cyan" id="qualityValueDisplay">0.70</span>
                                 </label>
                                 <div class="slider-container">
                                     <input type="range" id="quality" min="0.1" max="1.0" step="0.1" value="0.7">
                                     <div class="slider-track">
-                                        <div class="slider-fill" id="qualityFill"></div>
+                                        <div class="slider-fill gradient-cyan" id="qualityFill"></div>
                                     </div>
                                 </div>
                             </div>
@@ -215,15 +444,15 @@
                                 <div class="radio-group">
                                     <label class="radio-option">
                                         <input type="radio" name="mode" value="per-channel" checked>
-                                        <span class="radio-custom"></span>
+                                        <span class="radio-custom ring-cyan"></span>
                                         <span class="radio-text">Per-Channel</span>
-                                        <span class="radio-desc">Independent RGB</span>
+                                        <span class="radio-desc text-magenta">Independent RGB</span>
                                     </label>
                                     <label class="radio-option">
                                         <input type="radio" name="mode" value="joint-channel">
-                                        <span class="radio-custom"></span>
+                                        <span class="radio-custom ring-cyan"></span>
                                         <span class="radio-text">Joint-Channel</span>
-                                        <span class="radio-desc">Color space</span>
+                                        <span class="radio-desc text-magenta">Color space</span>
                                     </label>
                                 </div>
                             </div>
@@ -231,7 +460,7 @@
                             <div class="control-group">
                                 <label class="control-label">Retain Components</label>
                                 <div class="component-selector">
-                                    <button class="component-btn" data-val="1">1</button>
+                                    <button class="component-btn active" data-val="1">1</button>
                                     <button class="component-btn" data-val="2">2</button>
                                     <button class="component-btn" data-val="3">3</button>
                                 </div>
@@ -242,12 +471,12 @@
                                 <div class="radio-group">
                                     <label class="radio-option">
                                         <input type="radio" name="orientation" value="auto" checked>
-                                        <span class="radio-custom"></span>
+                                        <span class="radio-custom ring-cyan"></span>
                                         <span class="radio-text">Auto</span>
                                     </label>
                                     <label class="radio-option">
                                         <input type="radio" name="orientation" value="disabled">
-                                        <span class="radio-custom"></span>
+                                        <span class="radio-custom ring-cyan"></span>
                                         <span class="radio-text">Disabled</span>
                                     </label>
                                 </div>
@@ -266,22 +495,22 @@
 
                         <div class="controls-section controls-metrics">
                             <div class="section-header">
-                                <span class="section-number">02</span>
+                                <span class="section-number text-magenta">02</span>
                                 <span class="section-title">Metrics</span>
                             </div>
 
                             <div class="metrics-grid">
-                                <div class="metric-item">
+                                <div class="metric-item border-cyan">
                                     <span class="metric-label">SSIM</span>
-                                    <span class="metric-value" id="ssimValue">—</span>
+                                    <span class="metric-value text-cyan" id="ssimValue">—</span>
                                 </div>
-                                <div class="metric-item">
+                                <div class="metric-item border-amber">
                                     <span class="metric-label">PSNR</span>
-                                    <span class="metric-value" id="psnrValue">— dB</span>
+                                    <span class="metric-value text-amber" id="psnrValue">— dB</span>
                                 </div>
-                                <div class="metric-item">
+                                <div class="metric-item border-magenta">
                                     <span class="metric-label">Time</span>
-                                    <span class="metric-value" id="timeValue">— ms</span>
+                                    <span class="metric-value text-magenta" id="timeValue">— ms</span>
                                 </div>
                             </div>
                         </div>
@@ -289,7 +518,7 @@
                 </div>
 
                 <div class="workspace-status">
-                    <span class="status-indicator"></span>
+                    <span class="status-indicator gradient-cyan"></span>
                     <span class="status-message" id="statusMessage">System ready</span>
                 </div>
             </div>
@@ -298,16 +527,16 @@
             <div id="aboutScreen" class="screen">
                 <div class="theory-container">
                     <div class="theory-header">
-                        <span class="theory-label">THEORY</span>
+                        <span class="theory-label text-magenta">THEORY</span>
                         <h2 class="theory-title">
-                            <span>On the Mathematics</span>
+                            <span class="gradient-text-cyan">On the Mathematics</span>
                             <span>of Dimensionality</span>
                         </h2>
                     </div>
 
                     <div class="theory-content">
                         <div class="theory-block">
-                            <h3 class="theory-subtitle">The Method</h3>
+                            <h3 class="theory-subtitle gradient-text-amber">The Method</h3>
                             <p class="theory-text">
                                 Principal Component Analysis transforms data into an orthogonal coordinate system where the greatest variance by any projection lies on the first principal component. By projecting onto fewer dimensions, we achieve compression while preserving maximum information content.
                             </p>
@@ -315,34 +544,34 @@
 
                         <div class="theory-grid-theory">
                             <div class="theory-step">
-                                <span class="step-number">01</span>
-                                <h4 class="step-title">Center Data</h4>
+                                <span class="step-number text-cyan">01</span>
+                                <h4 class="step-title text-cyan">Center Data</h4>
                                 <p class="step-desc">Subtract the mean from all observations</p>
                             </div>
                             <div class="theory-step">
-                                <span class="step-number">02</span>
-                                <h4 class="step-title">Compute Covariance</h4>
+                                <span class="step-number text-amber">02</span>
+                                <h4 class="step-title text-amber">Compute Covariance</h4>
                                 <p class="step-desc">Calculate the covariance matrix C</p>
                             </div>
                             <div class="theory-step">
-                                <span class="step-number">03</span>
-                                <h4 class="step-title">Eigen-Decompose</h4>
+                                <span class="step-number text-magenta">03</span>
+                                <h4 class="step-title text-magenta">Eigen-Decompose</h4>
                                 <p class="step-desc">Find eigenvalues λᵢ and eigenvectors vᵢ</p>
                             </div>
                             <div class="theory-step">
-                                <span class="step-number">04</span>
-                                <h4 class="step-title">Project</h4>
+                                <span class="step-number text-cyan">04</span>
+                                <h4 class="step-title text-cyan">Project</h4>
                                 <p class="step-desc">Project data onto k largest eigenvectors</p>
                             </div>
                             <div class="theory-step">
-                                <span class="step-number">05</span>
-                                <h4 class="step-title">Reconstruct</h4>
+                                <span class="step-number text-amber">05</span>
+                                <h4 class="step-title text-amber">Reconstruct</h4>
                                 <p class="step-desc">Build approximation from reduced data</p>
                             </div>
                         </div>
 
                         <div class="theory-block">
-                            <h3 class="theory-subtitle">Quality Assessment</h3>
+                            <h3 class="theory-subtitle gradient-text-magenta">Quality Assessment</h3>
                             <p class="theory-text">
                                 We employ Structural Similarity (SSIM) and Peak Signal-to-Noise Ratio (PSNR) metrics. SSIM measures perceptual quality by comparing structural luminance, contrast, and texture patterns, while PSNR provides a mathematical assessment of reconstruction fidelity.
                             </p>
@@ -350,17 +579,17 @@
 
                         <div class="theory-footer">
                             <div class="theory-specs">
-                                <div class="spec-item">
+                                <div class="spec-item border-cyan">
                                     <span class="spec-label">Algorithm</span>
-                                    <span class="spec-value">PCA / SVD</span>
+                                    <span class="spec-value text-cyan">PCA / SVD</span>
                                 </div>
-                                <div class="spec-item">
+                                <div class="spec-item border-amber">
                                     <span class="spec-label">Implementation</span>
-                                    <span class="spec-value">JavaScript · Canvas</span>
+                                    <span class="spec-value text-amber">JavaScript · Canvas</span>
                                 </div>
-                                <div class="spec-item">
+                                <div class="spec-item border-magenta">
                                     <span class="spec-label">Version</span>
-                                    <span class="spec-value">1.0.0</span>
+                                    <span class="spec-value text-magenta">1.0.0</span>
                                 </div>
                             </div>
                         </div>
