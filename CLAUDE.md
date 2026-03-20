@@ -183,6 +183,14 @@ compress --batch /input/folder --output /output/folder --quality 0.7 --report cs
 - Python bindings (pca-py) via PyO3
 - GUI application (pca-gui) via Tauri
 
+**Phase 2b: Eigen Analysis Feature** - ✓ Completed
+- Eigen analysis module (`eigen_analysis.rs`) for eigenvalue/eigenvector computation
+- Principal axis overlay visualization on images
+- User-selectable overlay colors (Red, Yellow, Cyan, Green, Magenta)
+- Scientific notation for eigenvalue display
+- Variance explained calculations and display
+- Tauri commands for frontend integration
+
 **Build Commands:**
 ```bash
 # Build all components

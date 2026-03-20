@@ -192,6 +192,39 @@ Supports:
 
 ---
 
+**3b. Eigen Analysis Module**
+
+Purpose:
+
+Provide eigenvalue and eigenvector analysis for display and visualization.
+
+Functions:
+
+* analyze_image() - Perform PCA eigen-decomposition on image
+* get_axis_overlay() - Generate overlay coordinates for visualization
+* format_eigenvalue_scientific() - Format values in scientific notation
+
+Data Structures:
+
+* EigenAnalysisResult
+  - eigenvalues: Vec<f64> (λ₁, λ₂, λ₃)
+  - eigenvectors: Vec<f64> (3x3 matrix)
+  - variance_explained: Vec<f64> (percentages)
+  - cumulative_variance: Vec<f64>
+  - principal_axis_angle: f64 (degrees)
+  - confidence: f64 (0.0-1.0)
+  - recommended_rotation: f32 (0, 90, 180, 270)
+
+* AxisOverlay
+  - x1, y1, x2, y2: f64 (normalized 0-1)
+  - angle: f64
+  - primary_eigenvalue: f64
+
+* OverlayColor
+  - Red, Yellow, Cyan, Green, Magenta
+
+---
+
 **4. Tile Processing Engine**
 
 Purpose:
@@ -383,6 +416,38 @@ Returns:
 * processed count
 * failures
 * report file
+
+---
+
+### Eigen Analysis Commands
+
+```
+GET /v1/eigen
+```
+
+Returns eigen decomposition results for visualization.
+
+Response:
+
+```
+{
+  "eigenvalues": ["8.47e2", "4.22e1", "1.06e0"],
+  "variance_explained": ["94.1", "4.7", "1.2"],
+  "cumulative_variance": ["94.1", "98.8", "100.0"],
+  "principal_angle": 15.3,
+  "confidence": 0.87,
+  "recommended_rotation": 0,
+  "axis_overlay": {
+    "x1": 0.1,
+    "y1": 0.5,
+    "x2": 0.9,
+    "y2": 0.5,
+    "angle": 15.3,
+    "primary_eigenvalue": 847.23,
+    "color": "#FF0000"
+  }
+}
+```
 
 ---
 

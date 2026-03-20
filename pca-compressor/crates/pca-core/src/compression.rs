@@ -261,6 +261,18 @@ pub fn write_batch_report(results: &[BatchResult], report_path: &Path) -> Result
     Ok(())
 }
 
+/// Analyze eigen decomposition of an image file
+pub fn analyze_eigen_file(input_path: &Path) -> Result<crate::eigen_analysis::EigenAnalysisResult> {
+    let image = load_image(input_path)?;
+    crate::eigen_analysis::analyze_image(&image)
+}
+
+/// Get axis overlay data for an image file
+pub fn get_axis_overlay_file(input_path: &Path) -> Result<crate::eigen_analysis::AxisOverlay> {
+    let eigen_result = analyze_eigen_file(input_path)?;
+    Ok(crate::eigen_analysis::get_axis_overlay(&eigen_result))
+}
+
 /// Get supported input extensions
 pub fn supported_extensions() -> Vec<&'static str> {
     vec!["jpg", "jpeg", "png"]

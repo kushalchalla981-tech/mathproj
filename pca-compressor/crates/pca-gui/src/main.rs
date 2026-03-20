@@ -5,6 +5,7 @@ use std::fs;
 use std::path::PathBuf;
 use pca_core::prelude::*;
 use serde::{Deserialize, Serialize};
+use pca_core::eigen_analysis::{OverlayColor, format_eigenvalue_scientific};
 
 /// Compression parameters for GUI
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -140,6 +141,72 @@ async fn get_image_info(path: String) -> Result<ImageInfo, String> {
     })
 }
 
+/// Get eigen analysis for an image
+#[tauri::command]
+async fn get_eigen_analysis(path: String) -> Result<EigenInfo, String> {
+    let input = PathBuf::from(&path);
+    
+    let eigen_result = pca_core::compression::analyze_eigen_file(&input)
+        .map_err(|e| e.to_string())?;
+    
+    let axis_overlay = pca_core::eigen_analysis::get_axis_overlay(&eigen_result);
+    
+    Ok(EigenInfo {
+        eigenvalues: eigen_result.eigenvalues
+            .iter()
+            .map(|v| format_eigenvalue_scientific(*v))
+            .collect(),
+        variance_explained: eigen_result.variance_explained
+            .iter()
+            .map(|v| format!("{:.1}", v))
+            .collect(),
+        cumulative_variance: eigen_result.cumulative_variance
+            .iter()
+            .map(|v| format!("{:.1}", v))
+            .collect(),
+        principal_angle: eigen_result.principal_axis_angle,
+        confidence: eigen_result.confidence,
+        recommended_rotation: eigen_result.recommended_rotation as i32,
+        axis_overlay: AxisOverlayData {
+            x1: axis_overlay.x1,
+            y1: axis_overlay.y1,
+            x2: axis_overlay.x2,
+            y2: axis_overlay.y2,
+            angle: axis_overlay.angle,
+            primary_eigenvalue: axis_overlay.primary_eigenvalue,
+            color: "#FF0000".to_string(), // Default red
+        },
+    })
+}
+
+/// Get axis overlay with custom color
+#[tauri::command]
+async fn get_axis_overlay(
+    path: String, 
+    color: Option<String>
+) -> Result<AxisOverlayData, String> {
+    let input = PathBuf::from(&path);
+    
+    let eigen_result = pca_core::compression::analyze_eigen_file(&input)
+        .map_err(|e| e.to_string())?;
+    
+    let axis_overlay = pca_core::eigen_analysis::get_axis_overlay(&eigen_result);
+    
+    let overlay_color = color
+        .map(|c| OverlayColor::from_str(&c))
+        .unwrap_or(OverlayColor::Red);
+    
+    Ok(AxisOverlayData {
+        x1: axis_overlay.x1,
+        y1: axis_overlay.y1,
+        x2: axis_overlay.x2,
+        y2: axis_overlay.y2,
+        angle: axis_overlay.angle,
+        primary_eigenvalue: axis_overlay.primary_eigenvalue,
+        color: overlay_color.to_hex().to_string(),
+    })
+}
+
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ImageInfo {
     pub width: u32,
@@ -149,6 +216,28 @@ pub struct ImageInfo {
     pub color_space: String,
     pub size_bytes: u64,
     pub size_human: String,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct EigenInfo {
+    pub eigenvalues: Vec<String>,
+    pub variance_explained: Vec<String>,
+    pub cumulative_variance: Vec<String>,
+    pub principal_angle: f64,
+    pub confidence: f64,
+    pub recommended_rotation: i32,
+    pub axis_overlay: AxisOverlayData,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct AxisOverlayData {
+    pub x1: f64,
+    pub y1: f64,
+    pub x2: f64,
+    pub y2: f64,
+    pub angle: f64,
+    pub primary_eigenvalue: f64,
+    pub color: String,
 }
 
 /// Get supported file extensions
@@ -201,6 +290,8 @@ fn main() {
         .invoke_handler(tauri::generate_handler![
             compress_image,
             get_image_info,
+            get_eigen_analysis,
+            get_axis_overlay,
             get_supported_extensions,
             scan_directory,
             get_version,

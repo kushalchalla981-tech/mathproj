@@ -1,6 +1,7 @@
 //! PCA (Principal Component Analysis) compression implementation
 
 use crate::error::{CompressionError, Result};
+use crate::eigen_analysis::{analyze_image as eigen_analyze, EigenAnalysisResult};
 use crate::image::ImageData;
 use nalgebra::{DMatrix, DVector, SymmetricEigen};
 
@@ -171,6 +172,11 @@ pub struct CompressionResult {
     pub compression_ratio: f32,
     /// Processing time in milliseconds
     pub processing_time_ms: u64,
+}
+
+/// Perform eigen analysis on an image (alias for analyze_image from eigen_analysis)
+pub fn analyze_eigen(image: &ImageData) -> Result<EigenAnalysisResult> {
+    eigen_analyze(image)
 }
 
 /// Compress an image using PCA

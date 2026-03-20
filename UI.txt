@@ -503,4 +503,79 @@ Preview layout supports adding a third comparison mode such as swipe or overlay.
 
 ---
 
+## EIGEN ANALYSIS PANEL
+
+Purpose
+Display eigenvalue/eigenvector decomposition information for loaded images with principal axis visualization.
+
+Location
+Always visible below the image comparison panels in the Image Workspace.
+
+Layout Hierarchy
+
+Header Row
+• Panel title: "Eigen Analysis (PCA)"
+• Axis overlay color selector dropdown
+
+Main Content
+• 3-column grid for eigenvalue display (λ₁, λ₂, λ₃)
+• Variance explained bars for each eigenvalue
+• Summary statistics row
+
+Component Breakdown
+
+Eigenvalue Display
+• Lambda symbol (λ₁, λ₂, λ₃) with color coding
+• Scientific notation value (e.g., 8.47e2)
+• Variance bar showing percentage
+• Percentage label
+
+Axis Overlay Controls
+• Color dropdown: Red, Yellow, Cyan, Green, Magenta
+• Selected color applied to canvas overlay
+
+Summary Statistics
+• Principal Angle: degrees
+• Recommended Rotation: 0°/90°/180°/270°
+• Confidence: percentage
+
+Overlay Canvas
+• Positioned over original image
+• Principal axis line with arrowhead
+• Center point marker
+• Angle annotation (θ = X°)
+
+Interaction Logic
+
+On Image Load
+1. Perform eigen analysis on original image
+2. Display eigenvalues in scientific notation
+3. Calculate and show variance percentages
+4. Draw principal axis overlay on image
+
+On Color Change
+1. User selects new overlay color
+2. Redraw axis overlay with new color
+
+Visual Design
+
+Color Coding
+• λ₁ (Primary): Cyan (#00d4ff)
+• λ₂ (Secondary): Amber (#ffb347)
+• λ³ (Tertiary): Magenta (#ff6b9d)
+
+Axis Overlay
+• Line width: 3px
+• Arrowhead length: 15px
+• Center point radius: 5px
+• Annotation: JetBrains Mono, 14px
+
+Empty State
+Not applicable - panel only shown when image is loaded
+
+Error State
+Panel hidden if eigen analysis fails
+
+---
+
 If needed, the next step can be a **UX wireframe structure** or **design system component list** for implementation.

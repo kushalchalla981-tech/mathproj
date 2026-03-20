@@ -22,8 +22,26 @@ const fileInput = document.getElementById('fileInput');
 // DOM Elements - Canvas
 const originalCanvas = document.getElementById('originalCanvas');
 const compressedCanvas = document.getElementById('compressedCanvas');
+const overlayCanvas = document.getElementById('overlayCanvas');
 const originalCtx = originalCanvas.getContext('2d');
 const compressedCtx = compressedCanvas.getContext('2d');
+const overlayCtx = overlayCanvas.getContext('2d');
+
+// DOM Elements - Eigen Analysis
+const overlayColorSelect = document.getElementById('overlayColor');
+
+// Current eigen analysis result
+let currentEigenResult = null;
+let currentOverlayColor = 'red';
+
+// Color map for overlay
+const colorMap = {
+    'red': '#FF0000',
+    'yellow': '#FFFF00',
+    'cyan': '#00FFFF',
+    'green': '#00FF00',
+    'magenta': '#FF00FF'
+};
 
 // DOM Elements - Controls
 const qualitySlider = document.getElementById('quality');
@@ -76,6 +94,13 @@ qualitySlider.addEventListener('input', (e) => {
     const value = parseFloat(e.target.value);
     qualityValueDisplay.textContent = value.toFixed(2);
     qualityFill.style.width = `${value * 100}%`;
+});
+
+overlayColorSelect.addEventListener('change', (e) => {
+    currentOverlayColor = e.target.value;
+    if (currentEigenResult) {
+        drawAxisOverlay(currentEigenResult);
+    }
 });
 
 compressBtn.addEventListener('click', performCompression);
@@ -153,6 +178,17 @@ function handleFile(file) {
             // Enable compress button
             compressBtn.disabled = false;
             downloadBtn.disabled = true;
+
+            // Perform eigen analysis
+            try {
+                currentEigenResult = performEigenAnalysis(originalImageData);
+                updateEigenDisplay(currentEigenResult);
+                drawAxisOverlay(currentEigenResult);
+                document.getElementById('eigenPanel').style.display = 'block';
+            } catch (e) {
+                console.error('Eigen analysis error:', e);
+                document.getElementById('eigenPanel').style.display = 'none';
+            }
 
             // Navigate to workspace
             showScreen('workspace');
@@ -238,6 +274,300 @@ function performCompression() {
 }
 
 // PCA Compression Implementation
+
+// Eigen Analysis Functions
+function performEigenAnalysis(imageData) {
+    const data = imageData.data;
+    const width = imageData.width;
+    const height = imageData.height;
+    const numPixels = width * height;
+
+    // Build pixel data matrix
+    const pixels = [];
+    for (let i = 0; i < numPixels; i++) {
+        pixels.push({
+            r: data[i * 4] / 255,
+            g: data[i * 4 + 1] / 255,
+            b: data[i * 4 + 2] / 255
+        });
+    }
+
+    // Calculate mean for each channel
+    let meanR = 0, meanG = 0, meanB = 0;
+    for (let i = 0; i < numPixels; i++) {
+        meanR += pixels[i].r;
+        meanG += pixels[i].g;
+        meanB += pixels[i].b;
+    }
+    meanR /= numPixels;
+    meanG /= numPixels;
+    meanB /= numPixels;
+
+    // Center the data
+    const centered = pixels.map(p => ({
+        r: p.r - meanR,
+        g: p.g - meanG,
+        b: p.b - meanB
+    }));
+
+    // Compute 3x3 covariance matrix
+    let covRR = 0, covGG = 0, covBB = 0;
+    let covRG = 0, covRB = 0, covGB = 0;
+
+    for (let i = 0; i < numPixels; i++) {
+        const c = centered[i];
+        covRR += c.r * c.r;
+        covGG += c.g * c.g;
+        covBB += c.b * c.b;
+        covRG += c.r * c.g;
+        covRB += c.r * c.b;
+        covGB += c.g * c.b;
+    }
+
+    covRR /= (numPixels - 1);
+    covGG /= (numPixels - 1);
+    covBB /= (numPixels - 1);
+    covRG /= (numPixels - 1);
+    covRB /= (numPixels - 1);
+    covGB /= (numPixels - 1);
+
+    // Covariance matrix
+    const cov = [
+        [covRR, covRG, covRB],
+        [covRG, covGG, covGB],
+        [covRB, covGB, covBB]
+    ];
+
+    // Jacobi eigenvalue algorithm
+    const eigenResult = jacobiEigenvalue(cov);
+
+    // Sort eigenvalues in descending order
+    const indices = [0, 1, 2].sort((a, b) => eigenResult.values[b] - eigenResult.values[a]);
+    const eigenvalues = indices.map(i => Math.max(eigenResult.values[i], 1e-10));
+    const eigenvectors = indices.flatMap(i => eigenResult.vectors[i]);
+
+    // Calculate variance explained
+    const totalVariance = eigenvalues.reduce((a, b) => a + b, 0);
+    const varianceExplained = eigenvalues.map(v => (v / totalVariance) * 100);
+    const cumulativeVariance = varianceExplained.reduce((acc, v, i) => {
+        acc.push((acc[i - 1] || 0) + v);
+        return acc;
+    }, []);
+
+    // Calculate principal angle from first eigenvector
+    const primaryEigenvector = [eigenvectors[0], eigenvectors[1], eigenvectors[2]];
+    let principalAngle = Math.atan2(primaryEigenvector[1], primaryEigenvector[0]) * (180 / Math.PI);
+    if (principalAngle < 0) principalAngle += 360;
+
+    // Calculate confidence from eigenvalue ratio
+    const confidence = Math.min(1, Math.max(0, (eigenvalues[0] / totalVariance) * 2 - 1));
+
+    // Normalize to standard rotation
+    const rotations = [0, 90, 180, 270];
+    let recommendedRotation = 0;
+    let minDiff = Infinity;
+    for (const rot of rotations) {
+        const diff = Math.abs(principalAngle - rot);
+        const wrappedDiff = Math.min(diff, 360 - diff);
+        if (wrappedDiff < minDiff) {
+            minDiff = wrappedDiff;
+            recommendedRotation = rot;
+        }
+    }
+
+    return {
+        eigenvalues,
+        eigenvectors: primaryEigenvector,
+        varianceExplained,
+        cumulativeVariance,
+        principalAngle,
+        confidence,
+        recommendedRotation,
+        // Axis overlay coordinates
+        axisOverlay: {
+            x1: 0.5 - Math.cos(principalAngle * Math.PI / 180) * 0.4,
+            y1: 0.5 - Math.sin(principalAngle * Math.PI / 180) * 0.4,
+            x2: 0.5 + Math.cos(principalAngle * Math.PI / 180) * 0.4,
+            y2: 0.5 + Math.sin(principalAngle * Math.PI / 180) * 0.4,
+            angle: principalAngle,
+            primaryEigenvalue: eigenvalues[0]
+        }
+    };
+}
+
+// Jacobi eigenvalue algorithm for symmetric 3x3 matrix
+function jacobiEigenvalue(A) {
+    const n = 3;
+    let V = [[1, 0, 0], [0, 1, 0], [0, 0, 1]];
+    let d = [A[0][0], A[1][1], A[2][2]];
+
+    for (let iter = 0; iter < 50; iter++) {
+        // Check convergence
+        let off = 0;
+        for (let i = 0; i < n; i++) {
+            for (let j = i + 1; j < n; j++) {
+                off += A[i][j] * A[i][j];
+            }
+        }
+        if (off < 1e-15) break;
+
+        // Find largest off-diagonal element
+        let p, q, maxOff = 0;
+        for (let i = 0; i < n; i++) {
+            for (let j = i + 1; j < n; j++) {
+                const off_ij = Math.abs(A[i][j]);
+                if (off_ij > maxOff) {
+                    maxOff = off_ij;
+                    p = i;
+                    q = j;
+                }
+            }
+        }
+
+        // Compute rotation
+        const theta = (A[q][q] - A[p][p]) / (2 * A[p][q]);
+        const t = (theta >= 0 ? 1 : -1) / (Math.abs(theta) + Math.sqrt(1 + theta * theta));
+        const c = 1 / Math.sqrt(1 + t * t);
+        const s = t * c;
+
+        // Update A
+        const a_pp = A[p][p];
+        const a_qq = A[q][q];
+        const a_pq = A[p][q];
+
+        A[p][p] = c * c * a_pp + s * s * a_qq - 2 * s * c * a_pq;
+        A[q][q] = s * s * a_pp + c * c * a_qq + 2 * s * c * a_pq;
+        A[p][q] = 0;
+        A[q][p] = 0;
+
+        for (let i = 0; i < n; i++) {
+            if (i !== p && i !== q) {
+                const a_ip = A[i][p];
+                const a_iq = A[i][q];
+                A[i][p] = c * a_ip - s * a_iq;
+                A[p][i] = A[i][p];
+                A[i][q] = s * a_ip + c * a_iq;
+                A[q][i] = A[i][q];
+            }
+        }
+
+        // Update V
+        for (let i = 0; i < n; i++) {
+            const v_ip = V[i][p];
+            const v_iq = V[i][q];
+            V[i][p] = c * v_ip - s * v_iq;
+            V[i][q] = s * v_ip + c * v_iq;
+        }
+
+        // Update d
+        d = [A[0][0], A[1][1], A[2][2]];
+    }
+
+    return { values: d, vectors: V };
+}
+
+// Format number in scientific notation
+function formatScientific(value) {
+    if (Math.abs(value) < 0.0001 || Math.abs(value) >= 10000) {
+        return value.toExponential(2);
+    }
+    const exp = Math.floor(Math.log10(Math.abs(value)));
+    const mantissa = value / Math.pow(10, exp);
+    return `${mantissa.toFixed(2)}e${exp}`;
+}
+
+// Update eigen analysis display
+function updateEigenDisplay(eigenResult) {
+    // Update eigenvalues
+    document.getElementById('lambda1').textContent = formatScientific(eigenResult.eigenvalues[0]);
+    document.getElementById('lambda2').textContent = formatScientific(eigenResult.eigenvalues[1]);
+    document.getElementById('lambda3').textContent = formatScientific(eigenResult.eigenvalues[2]);
+
+    // Update variance bars
+    document.getElementById('varBar1').style.width = `${eigenResult.varianceExplained[0]}%`;
+    document.getElementById('varBar2').style.width = `${eigenResult.varianceExplained[1]}%`;
+    document.getElementById('varBar3').style.width = `${eigenResult.varianceExplained[2]}%`;
+
+    // Update variance percentages
+    document.getElementById('varPercent1').textContent = `${eigenResult.varianceExplained[0].toFixed(1)}%`;
+    document.getElementById('varPercent2').textContent = `${eigenResult.varianceExplained[1].toFixed(1)}%`;
+    document.getElementById('varPercent3').textContent = `${eigenResult.varianceExplained[2].toFixed(1)}%`;
+
+    // Update summary stats
+    document.getElementById('principalAngle').textContent = `${eigenResult.principalAngle.toFixed(1)}°`;
+    document.getElementById('recommendedRotation').textContent = `${eigenResult.recommendedRotation}°`;
+    document.getElementById('eigenConfidence').textContent = `${(eigenResult.confidence * 100).toFixed(1)}%`;
+}
+
+// Draw axis overlay on canvas
+function drawAxisOverlay(eigenResult) {
+    if (!overlayCanvas || !originalCanvas) return;
+
+    // Match overlay canvas size to original
+    overlayCanvas.width = originalCanvas.width;
+    overlayCanvas.height = originalCanvas.height;
+
+    // Clear overlay
+    overlayCtx.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height);
+
+    const overlay = eigenResult.axisOverlay;
+
+    // Get color from selection
+    const color = colorMap[currentOverlayColor] || '#FF0000';
+
+    // Draw principal axis line
+    overlayCtx.beginPath();
+    overlayCtx.moveTo(overlay.x1 * overlayCanvas.width, overlay.y1 * overlayCanvas.height);
+    overlayCtx.lineTo(overlay.x2 * overlayCanvas.width, overlay.y2 * overlayCanvas.height);
+    overlayCtx.strokeStyle = color;
+    overlayCtx.lineWidth = 3;
+    overlayCtx.stroke();
+
+    // Draw arrowhead
+    const angle = Math.atan2(
+        overlay.y2 - overlay.y1,
+        overlay.x2 - overlay.x1
+    );
+    const arrowLength = 15;
+    const arrowAngle = Math.PI / 6;
+
+    overlayCtx.beginPath();
+    overlayCtx.moveTo(overlay.x2 * overlayCanvas.width, overlay.y2 * overlayCanvas.height);
+    overlayCtx.lineTo(
+        overlay.x2 * overlayCanvas.width - arrowLength * Math.cos(angle - arrowAngle),
+        overlay.y2 * overlayCanvas.height - arrowLength * Math.sin(angle - arrowAngle)
+    );
+    overlayCtx.moveTo(overlay.x2 * overlayCanvas.width, overlay.y2 * overlayCanvas.height);
+    overlayCtx.lineTo(
+        overlay.x2 * overlayCanvas.width - arrowLength * Math.cos(angle + arrowAngle),
+        overlay.y2 * overlayCanvas.height - arrowLength * Math.sin(angle + arrowAngle)
+    );
+    overlayCtx.strokeStyle = color;
+    overlayCtx.lineWidth = 3;
+    overlayCtx.stroke();
+
+    // Draw center point
+    overlayCtx.beginPath();
+    overlayCtx.arc(
+        overlayCanvas.width / 2,
+        overlayCanvas.height / 2,
+        5,
+        0,
+        Math.PI * 2
+    );
+    overlayCtx.fillStyle = color;
+    overlayCtx.fill();
+
+    // Draw angle annotation
+    overlayCtx.font = '14px JetBrains Mono, monospace';
+    overlayCtx.fillStyle = color;
+    overlayCtx.fillText(
+        `θ = ${overlay.angle.toFixed(1)}°`,
+        10,
+        overlayCanvas.height - 10
+    );
+}
+
 function pcaCompress(imageData, quality, retainComponents, mode, orientation) {
     const data = new Float32Array(imageData.data);
     const width = imageData.width;

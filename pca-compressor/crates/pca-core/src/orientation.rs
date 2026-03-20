@@ -1,5 +1,6 @@
 //! Orientation detection and correction
 
+use crate::eigen_analysis::{analyze_image, EigenAnalysisResult};
 use crate::error::{CompressionError, Result};
 use crate::image::ImageData;
 
@@ -68,135 +69,42 @@ pub fn correct_orientation(
             }
         }
         crate::pca::OrientationMode::Auto => {
-            // Try PCA first
-            let (pca_orientation, confidence) = detect_orientation_pca(image)?;
-
-            if confidence >= 0.6 {
-                // Use PCA orientation
-                let corrected = rotate_image(image, pca_orientation)?;
-                Ok((corrected, OrientationMethod::Pca))
-            } else if let Some(exif_orientation) = image.exif_orientation {
-                // Fall back to EXIF
-                let corrected = apply_exif_orientation(image, exif_orientation)?;
-                Ok((corrected, OrientationMethod::Exif))
-            } else {
-                // No correction needed
-                Ok((image.clone(), OrientationMethod::None))
+            // Try PCA first using the eigen analysis module
+            match analyze_image(image) {
+                Ok(eigen_result) => {
+                    if eigen_result.confidence >= 0.6 {
+                        // Use PCA orientation
+                        let corrected = rotate_image(image, eigen_result.recommended_rotation)?;
+                        Ok((corrected, OrientationMethod::Pca))
+                    } else if let Some(exif_orientation) = image.exif_orientation {
+                        // Fall back to EXIF
+                        let corrected = apply_exif_orientation(image, exif_orientation)?;
+                        Ok((corrected, OrientationMethod::Exif))
+                    } else {
+                        // No correction needed
+                        Ok((image.clone(), OrientationMethod::None))
+                    }
+                }
+                Err(_) => {
+                    // PCA failed, try EXIF fallback
+                    if let Some(exif_orientation) = image.exif_orientation {
+                        let corrected = apply_exif_orientation(image, exif_orientation)?;
+                        Ok((corrected, OrientationMethod::Exif))
+                    } else {
+                        Ok((image.clone(), OrientationMethod::None))
+                    }
+                }
             }
         }
     }
 }
 
-/// Detect orientation using PCA principal axis
-///
-/// Returns (rotation_degrees, confidence)
-fn detect_orientation_pca(image: &ImageData) -> Result<(f32, f32)> {
-    use nalgebra::{DMatrix, SVD};
-
-    // Get RGB data as a matrix of pixel positions weighted by intensity
-    let (r, g, b) = image.split_channels();
-    let n_pixels = image.num_pixels();
-
-    // Calculate intensity-weighted pixel positions
-    // For orientation, we care about where the "energy" is in the image
-    let mut x_coords = Vec::with_capacity(n_pixels);
-    let mut y_coords = Vec::with_capacity(n_pixels);
-    let mut weights = Vec::with_capacity(n_pixels);
-
-    for y in 0..image.height {
-        for x in 0..image.width {
-            let idx = (y * image.width + x) as usize;
-            let intensity = (r[idx] + g[idx] + b[idx]) / 3.0;
-
-            // Only include pixels with significant intensity
-            if intensity > 0.1 {
-                x_coords.push(x as f64);
-                y_coords.push(y as f64);
-                weights.push(intensity as f64);
-            }
-        }
-    }
-
-    if x_coords.len() < 100 {
-        // Not enough data points
-        return Ok((0.0, 0.0));
-    }
-
-    // Calculate weighted centroid
-    let total_weight: f64 = weights.iter().sum();
-    let mean_x: f64 = x_coords.iter().zip(&weights).map(|(x, w)| x * w).sum::<f64>() / total_weight;
-    let mean_y: f64 = y_coords.iter().zip(&weights).map(|(y, w)| y * w).sum::<f64>() / total_weight;
-
-    // Mean-center
-    let centered_x: Vec<f64> = x_coords.iter().map(|x| x - mean_x).collect();
-    let centered_y: Vec<f64> = y_coords.iter().map(|y| y - mean_y).collect();
-
-    // Build covariance matrix
-    let mut cov_xx = 0.0;
-    let mut cov_yy = 0.0;
-    let mut cov_xy = 0.0;
-
-    for i in 0..centered_x.len() {
-        let w = weights[i] / total_weight;
-        cov_xx += centered_x[i] * centered_x[i] * w;
-        cov_yy += centered_y[i] * centered_y[i] * w;
-        cov_xy += centered_x[i] * centered_y[i] * w;
-    }
-
-    // Eigen-decomposition of 2x2 covariance
-    let cov = DMatrix::from_row_slice(2, 2, &[
-        cov_xx, cov_xy,
-        cov_xy, cov_yy,
-    ]);
-
-    let svd = SVD::new(cov, true, true);
-    let singular_values = svd.singular_values;
-
-    // Calculate confidence from eigenvalue ratio
-    let eigen_ratio = if singular_values[0] > 0.0 {
-        singular_values[0] / (singular_values[0] + singular_values[1]).max(1e-10)
-    } else {
-        0.0
-    };
-
-    // Get principal axis direction
-    let u = svd.u.expect("SVD U matrix should exist");
-    let principal_x = u[(0, 0)];
-    let principal_y = u[(1, 0)];
-
-    // Calculate angle
-    let angle_rad = principal_y.atan2(principal_x);
-    let angle_deg = angle_rad.to_degrees();
-
-    // Normalize to 0-360
-    let normalized_angle = ((angle_deg % 360.0) + 360.0) % 360.0;
-
-    // Determine which standard rotation this is closest to
-    let rotation = normalize_to_standard_rotation(normalized_angle);
-
-    // Confidence is based on eigenvalue ratio
-    let confidence = (eigen_ratio * 2.0 - 1.0).clamp(0.0, 1.0);
-
-    Ok((rotation, confidence))
+/// Detect orientation using eigen analysis (returns full eigen result)
+pub fn detect_orientation_with_eigen(image: &ImageData) -> Result<EigenAnalysisResult> {
+    analyze_image(image)
 }
 
-/// Normalize angle to one of: 0, 90, 180, 270
-fn normalize_to_standard_rotation(angle: f64) -> f32 {
-    let rotations = [0.0f64, 90.0, 180.0, 270.0];
-    let mut closest = 0.0f64;
-    let mut min_diff = f64::MAX;
 
-    for &rot in &rotations {
-        let diff = (angle - rot).abs();
-        let diff = diff.min(360.0 - diff); // Handle wrap-around
-        if diff < min_diff {
-            min_diff = diff;
-            closest = rot;
-        }
-    }
-
-    closest as f32
-}
 
 /// Apply EXIF orientation
 fn apply_exif_orientation(image: &ImageData, orientation: u8) -> Result<ImageData> {
